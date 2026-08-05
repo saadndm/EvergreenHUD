@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Minecraft.class)
 public abstract class Mixin_Minecraft_SelectedItemChangedEvent {
+    //? if > 1.8.9 {
     @Inject(
             method = "handleKeybinds",
             at = @At(
@@ -27,9 +28,22 @@ public abstract class Mixin_Minecraft_SelectedItemChangedEvent {
             ),
             require = 0
     )
+    //?} else {
+    /*@Inject(
+            method = "tick",
+            at = @At(
+                    value = "FIELD",
+                    target = "Lnet/minecraft/entity/living/player/PlayerInventory;selectedSlot:I",
+                    opcode = Opcodes.PUTFIELD,
+                    shift = At.Shift.AFTER
+            )
+    )
+    *///?}
     private void selectedItemChangeCallback(CallbackInfo ci) {
+        //~ if = 1.8.9 'LocalPlayer' -> 'LocalClientPlayerEntity'
         LocalPlayer player = Minecraft.getInstance().player;
         if (player != null) {
+            //~ if = 1.8.9 'player.getMainHandItem()' -> 'player.inventory.getSelectedItem()'
             EventManager.INSTANCE.post(new SelectedItemChangedEvent(player.getMainHandItem()));
         }
     }

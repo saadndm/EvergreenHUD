@@ -1,5 +1,6 @@
 package org.polyfrost.evergreenhud.mixins.client;
 
+//? if > 1.8.9 {
 import net.minecraft.client.Minecraft;
 //? if < 26
 //import net.minecraft.client.gui.GuiGraphics;
@@ -17,17 +18,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class Mixin_AbstractContainerScreen_ShulkerPreviewTooltip {
 
     @Inject(
-        //? if < 26
-        //method = "render",
-        //? if >= 26
+        //? if >= 26.1 {
         method = "extractRenderState",
+        //?} else
+        //method = "render",
         at = @At("TAIL")
     )
     private void evergreenhud$shulkerPreviewTooltip(
-            //? if < 26
-            //GuiGraphics graphics,
-            //? if >= 26
+            //? if >= 26.1 {
             GuiGraphicsExtractor graphics,
+            //?} elif > 1.8.9
+            //GuiGraphics graphics,
             int mouseX, int mouseY, float partialTick, CallbackInfo ci
     ) {
         ItemStack hovered = ShulkerPreview.consumeHovered(mouseX, mouseY);
@@ -40,3 +41,10 @@ public class Mixin_AbstractContainerScreen_ShulkerPreviewTooltip {
     }
 
 }
+//?} else {
+/*import net.minecraft.SharedConstants;
+import org.spongepowered.asm.mixin.Mixin;
+
+@Mixin(SharedConstants.class)
+public class Mixin_AbstractContainerScreen_ShulkerPreviewTooltip {}
+*///?}

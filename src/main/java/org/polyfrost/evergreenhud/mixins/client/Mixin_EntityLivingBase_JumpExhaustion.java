@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(LivingEntity.class)
 public class Mixin_EntityLivingBase_JumpExhaustion {
+    //~ if = 1.8.9 'jumpFromGround' -> 'jump'
     @Inject(method = "jumpFromGround", at = @At("RETURN"))
     private void evergreenhud$trackJumpExhaustion(CallbackInfo ci) {
         SaturationTracker.INSTANCE.onJump((LivingEntity) (Object) this);

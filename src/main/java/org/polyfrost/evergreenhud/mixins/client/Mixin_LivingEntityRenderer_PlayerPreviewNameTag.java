@@ -14,9 +14,10 @@ public class Mixin_LivingEntityRenderer_PlayerPreviewNameTag {
     @Inject(
             //? if >=1.21.4 {
             method = "shouldShowName(Lnet/minecraft/world/entity/LivingEntity;D)Z",
-            //?} else {
+            //?} else if > 1.8.9 {
             /*method = "shouldShowName(Lnet/minecraft/world/entity/LivingEntity;)Z",
-            *///?}
+            *///?} else
+            //method = "shouldRenderNameTag(Lnet/minecraft/entity/living/LivingEntity;)Z",
             at = @At("HEAD"),
             cancellable = true
     )

@@ -10,10 +10,18 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+//~ if = 1.8.9 'FoodData' -> 'HungerManager'
 @Mixin(FoodData.class)
 public class Mixin_FoodStats_SaturationChangedEvent {
+    //? if > 1.8.9 {
     @Inject(method = "setSaturation", at = @At("RETURN"))
     private void evergreenhud$onServerSync(float saturation, CallbackInfo ci) {
         SaturationTracker.INSTANCE.onServerSync((FoodData) (Object) this);
     }
+    //?} else {
+    /*@Inject(method = "setSaturationLevel", at = @At("RETURN"))
+    private void evergreenhud$onServerSync(float saturation, CallbackInfo ci) {
+        SaturationTracker.INSTANCE.onServerSync((HungerManager) (Object) this);
+    }
+    *///?}
 }
