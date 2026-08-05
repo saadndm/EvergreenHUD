@@ -1,12 +1,31 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import net.ornithemc.ploceus.api.PloceusGradleExtensionApi
 
 plugins {
     id("dev.kikugie.loom-back-compat")
+    id("net.fabricmc.fabric-loom-remap") apply false
+    id("ploceus") version "1.17.4" apply false
     id("org.jetbrains.kotlin.jvm") version "2.4.0"
     id("org.jetbrains.kotlin.plugin.compose") version "2.4.0"
     id("org.jetbrains.compose") version "1.11.0"
     id("dev.deftu.gradle.bloom") version "0.2.0"
     id("me.modmuss50.mod-publish-plugin") version "2.0.0"
+}
+
+val isOrnithe = stonecutter.current.version == "1.8.9"
+val ploceus = if (isOrnithe) {
+    pluginManager.apply("net.fabricmc.fabric-loom-remap")
+    pluginManager.apply("ploceus")
+
+    configurations.configureEach {
+        exclude(group = "org.lwjgl.lwjgl")
+    }
+
+    extensions.getByType<PloceusGradleExtensionApi>().apply {
+        setIntermediaryGeneration(2)
+    }
+} else {
+    null
 }
 
 version = "${property("mod.version")}+${sc.current.version}"
@@ -17,7 +36,7 @@ val requiredJava: JavaVersion = when {
     sc.current.parsed >= "1.20.5" -> JavaVersion.VERSION_21
     sc.current.parsed >= "1.18" -> JavaVersion.VERSION_17
     sc.current.parsed >= "1.17" -> JavaVersion.VERSION_16
-    else -> JavaVersion.VERSION_1_8
+    else -> JavaVersion.VERSION_25
 }
 
 bloom {
@@ -31,6 +50,17 @@ repositories {
     mavenCentral()
     gradlePluginPortal()
     google()
+
+    exclusiveContent {
+        forRepository { mavenCentral() }
+        filter { includeGroup("org.lwjgl") }
+    }
+    maven("https://maven.axolotlclient.com/releases") {
+        content {
+            includeGroup("io.github.moehreag")
+            includeGroup("io.github.moehreag.legacy-lwjgl3")
+        }
+    }
 
     maven("https://maven.parchmentmc.org")
     maven("https://repo.polyfrost.org/releases")
@@ -68,7 +98,12 @@ repositories {
 
 dependencies {
     minecraft("com.mojang:minecraft:${sc.current.version}")
-    loomx.applyMojangMappings()
+    if (isOrnithe) {
+        mappings(ploceus!!.featherMappings(property("deps.feather_build") as String))
+        ploceus.dependOsl(property("deps.osl_version") as String)
+    } else {
+        loomx.applyMojangMappings()
+    }
 
     fun ocfg(vararg modules: String) {
         for (it in modules) modImplementation("org.polyfrost.oneconfig:${it}:${property("deps.oneconfig") as String}")
@@ -76,9 +111,12 @@ dependencies {
 
     modImplementation("net.fabricmc:fabric-loader:${property("deps.fabric_loader")}")
 
-    ocfg("${sc.current.version}-fabric", "commands", "config", "config-impl", "events", "internal", "ui", "utils", "hud")
+    val loader = if (isOrnithe) "ornithe" else "fabric"
+    ocfg("${sc.current.version}-$loader", "commands", "config", "config-impl", "events", "internal", "ui", "utils", "hud")
 
-    modImplementation("net.fabricmc.fabric-api:fabric-api:${sc.properties["deps.fabric_api"] as String}")
+    if (!isOrnithe) {
+        modImplementation("net.fabricmc.fabric-api:fabric-api:${sc.properties["deps.fabric_api"] as String}")
+    }
 
     modRuntimeOnly("me.djtheredstoner:DevAuth-fabric:1.2.2")
     compileOnly(compose.desktop.currentOs)
