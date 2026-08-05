@@ -63,6 +63,7 @@ repositories {
     }
 
     maven("https://maven.parchmentmc.org")
+    maven("https://repo.saadndm.com/releases")
     maven("https://repo.polyfrost.org/releases")
     maven("https://repo.polyfrost.org/snapshots")
     maven("https://maven.gegy.dev/releases")
