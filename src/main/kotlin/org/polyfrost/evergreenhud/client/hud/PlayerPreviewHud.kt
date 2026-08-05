@@ -1,11 +1,18 @@
 package org.polyfrost.evergreenhud.client.hud
 
-//? if < 26
-//import net.minecraft.client.gui.GuiGraphics
-//? if >= 26
+//? if >= 26.1 {
 import net.minecraft.client.gui.GuiGraphicsExtractor as GuiGraphics
+//?} elif > 1.8.9 {
+/*import net.minecraft.client.gui.GuiGraphics
+*///?} else {
+/*import net.minecraft.client.gui.GuiElement
+import net.minecraft.client.render.platform.GlStateManager
+*///?}
 import net.minecraft.client.gui.screens.inventory.InventoryScreen
+//? if > 1.8.9 {
 import net.minecraft.util.Mth
+//?} else
+//import net.minecraft.util.math.MathHelper
 import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.evergreenhud.client.hooks.playerPreviewPartialTick
 import org.polyfrost.evergreenhud.client.hooks.smuggledHudPartialTick
@@ -52,8 +59,12 @@ class PlayerPreviewHud : LegacyHud(
 
     override fun update() = false
 
+    //? if > 1.8.9 {
     override fun render(graphics: GuiGraphics) {
+    //?} else
+    //override fun render() {
         backgroundArgb?.let {
+            //~ if = 1.8.9 'graphics' -> 'GuiElement'
             graphics.fill(0, 0, width.toInt(), height.toInt(), it)
         }
 
@@ -74,18 +85,32 @@ class PlayerPreviewHud : LegacyHud(
         val yawOffset: Float
         val pitchOffset: Float
         if (paperDoll) {
+            //? if > 1.8.9 {
             val bodyYaw = Mth.rotLerp(partialTick, player.yBodyRotO, player.yBodyRot)
             yawOffset = Mth.wrapDegrees(player.yRot - bodyYaw)
             pitchOffset = player.xRot
+            //?} else {
+            /*val bodyYaw = player.lastBodyYaw + partialTick * MathHelper.wrapDegrees(player.bodyYaw - player.lastBodyYaw)
+            yawOffset = MathHelper.wrapDegrees(player.yaw - bodyYaw)
+            pitchOffset = player.pitch
+            *///?}
         } else {
             yawOffset = rotation - 180f
             pitchOffset = pitch
         }
 
+        //? if = 1.8.9 {
+        /*val lastBodyYaw = player.lastBodyYaw
+        val lastYaw = player.lastYaw
+        val lastPitch = player.lastPitch
+        player.lastBodyYaw = (Math.atan((yawOffset / 40f).toDouble()) * 20f).toFloat()
+        player.lastYaw = (Math.atan((yawOffset / 40f).toDouble()) * 40f).toFloat()
+        player.lastPitch = (Math.atan((pitchOffset / 40f).toDouble()) * 20f).toFloat()
+        *///?}
         playerPreviewPartialTick = partialTick
         try {
+            //? if > 1.8.9 {
             //? if < 1.21.8 {
-
             /*graphics.pose().pushPose()
             graphics.pose().last().pose().identity()
             *///?}
@@ -103,8 +128,24 @@ class PlayerPreviewHud : LegacyHud(
             )
             //? if < 1.21.8
             //graphics.pose().popPose()
+            //?} else {
+            /*GlStateManager.color4f(1f, 1f, 1f, 1f)
+            SurvivalInventoryScreen.renderEntity(
+                (width / 2f).toInt(),
+                (height / 2f + 36f).toInt(),
+                40,
+                yawOffset,
+                -pitchOffset,
+                player,
+            )
+            *///?}
         } finally {
             playerPreviewPartialTick = -1f
+            //? if = 1.8.9 {
+            /*player.lastBodyYaw = lastBodyYaw
+            player.lastYaw = lastYaw
+            player.lastPitch = lastPitch
+            *///?}
         }
     }
 }

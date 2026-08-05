@@ -1,8 +1,12 @@
 package org.polyfrost.evergreenhud.client.hud
 
-
+//? if > 1.8.9 {
 import net.minecraft.network.protocol.common.ClientboundPingPacket
 import net.minecraft.network.protocol.game.ClientboundSetTimePacket
+//?} else {
+/*import net.minecraft.network.packet.s2c.play.WorldTimeS2CPacket as ClientboundSetTimePacket
+import net.minecraft.network.packet.s2c.play.InventoryMenuConfirmS2CPacket
+*///?}
 import org.polyfrost.evergreenhud.client.ServerChangedEvent
 import org.polyfrost.evergreenhud.client.utils.GenericNumberHud
 import org.polyfrost.evergreenhud.client.utils.replace
@@ -40,7 +44,10 @@ class TpsHud : GenericNumberHud(
         eventHandler { (packet): PacketEvent.Receive ->
             when (packet) {
                 is ClientboundSetTimePacket -> if (!useTickPings) onTimeUpdate()
+                //? if > 1.8.9
                 is ClientboundPingPacket -> if (useTickPings) onTickPing()
+                //? if = 1.8.9
+                //is InventoryMenuConfirmS2CPacket -> if (useTickPings && packet.menuId == 0 && !packet.accepted) onTickPing()
             }
         }
 

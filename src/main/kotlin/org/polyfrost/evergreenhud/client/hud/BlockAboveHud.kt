@@ -1,9 +1,11 @@
 package org.polyfrost.evergreenhud.client.hud
 
 import net.minecraft.core.BlockPos
-import net.minecraft.core.Direction
+//? if > 1.8.9 {
 import net.minecraft.sounds.SoundEvents
 import net.minecraft.world.level.block.*
+//?} else
+//import net.minecraft.block.*
 import org.polyfrost.evergreenhud.client.BlockChangeEvent
 import org.polyfrost.evergreenhud.client.BlockPositionChangedEvent
 import org.polyfrost.evergreenhud.client.utils.CachedTextHud
@@ -43,7 +45,10 @@ class BlockAboveHud : CachedTextHud(
                 update(pos)
             },
             eventHandler { (pos): BlockChangeEvent ->
+                //? if > 1.8.9 {
                 val player = mc.player?.blockPosition() ?: return@eventHandler
+                //?} else
+                //val player = BlockPos(mc.player ?: return@eventHandler) ?: return@eventHandler
                 if (pos.y > player.y && pos.x == player.x && pos.z == player.z) {
                     update(player)
                 }
@@ -60,17 +65,21 @@ class BlockAboveHud : CachedTextHud(
     }
 
     private fun update(currentPos: BlockPos) {
+        //~ if = 1.8.9 'mc.level' -> 'mc.world'
         val level = mc.level ?: return
-        val pos = currentPos.mutable().move(Direction.UP)
+        //~ if = 1.8.9 'currentPos.above()' -> 'currentPos.up()'
+        var pos = currentPos.above()
 
         var above = 0
         var found = false
         for (i in 1..checkHeight) {
-            pos.move(Direction.UP)
-            //? if > 1.21.1
+            //~ if = 1.8.9 'pos.above()' -> 'pos.up()'
+            pos = pos.above()
+            //? if > 1.8.9 {
+            //~ if < 1.21.2 'level.maxY' -> 'level.maxBuildHeight'
             if (pos.y > level.maxY) {
-            //? if <= 1.21.1
-            //if (pos.y > level.maxBuildHeight) {
+            //?} else
+            //if (pos.y > level.height) {
                 break
             }
 
@@ -86,7 +95,10 @@ class BlockAboveHud : CachedTextHud(
 
         val distance = if (found) above else Int.MAX_VALUE
         if (notify && !hidden && distance <= notifyHeight && distance < lastDistance) {
+            //? if > 1.8.9 {
             mc.player?.playSound(SoundEvents.EXPERIENCE_ORB_PICKUP, 0.25f, 1f)
+            //?} else
+            //mc.player?.playSound("random.orb", 0.25f, 1f)
         }
         lastDistance = distance
 

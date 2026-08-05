@@ -1,6 +1,7 @@
 package org.polyfrost.evergreenhud.client
 
 import net.minecraft.core.BlockPos
+//? if > 1.8.9
 import net.minecraft.network.chat.Component
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.player.Player
@@ -19,13 +20,16 @@ data class ServerDamageEntityEvent(
 ) : Event
 
 data class ClientPlaceBlockEvent(
+    //~ if = 1.8.9 'Player' -> 'PlayerEntity'
     val player: Player,
+    //~ if = 1.8.9 'Level' -> 'World'
     val world: Level
 ) : Event
 
 data class ServerChangedEvent(
     val ip: String?,
     val name: String?,
+    //~ if = 1.8.9 'Component' -> 'String'
     val motd: Component?
 ) : Event
 

@@ -73,11 +73,14 @@ class PositionHud : GenericNumberHud(
         super.setup()
         eventHandler { _: TickEvent.End ->
             val player = mc.player ?: return@eventHandler
+            //~ if = 1.8.9 'mc.cameraEntity' -> 'mc.camera'
             val camera = mc.cameraEntity ?: player
             this.px = player.x
             this.py = player.y
             this.pz = player.z
+            //~ if = 1.8.9 'camera.yRot' -> 'camera.yaw'
             this.yaw = Facing.wrapDegrees(camera.yRot).toDouble()
+            //~ if = 1.8.9 'camera.xRot' -> 'camera.pitch'
             this.pitch = camera.xRot.toDouble()
             updateAndRecalculate()
         }

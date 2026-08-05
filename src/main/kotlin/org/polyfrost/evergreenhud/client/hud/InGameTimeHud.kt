@@ -20,10 +20,11 @@ class InGameTimeHud : CachedTextHud(
     }
 
     override fun getText(): String {
-        //? if < 26
-        //val time = ((mc.level?.dayTime ?: 0L) + 6000L) % 24000L
-        //? if >= 26
+        //? if > 1.8.9 {
+        //~ if < 26 'level?.overworldClockTime' -> 'level?.dayTime'
         val time = ((mc.level?.overworldClockTime ?: 0L) + 6000L) % 24000L
+        //?} else
+        //val time = ((mc.world?.timeOfDay ?: 0L) + 6000L) % 24000L
         val seconds = (time * 3.6).toLong()
         val minutes = (seconds % 3600L) / 60L
         val hours = (seconds / 3600L) % 24L

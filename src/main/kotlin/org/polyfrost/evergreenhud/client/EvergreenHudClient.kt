@@ -3,8 +3,11 @@ package org.polyfrost.evergreenhud.client
 import net.fabricmc.api.ClientModInitializer
 import net.minecraft.core.BlockPos
 import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket
+//? if > 1.8.9 {
 import net.minecraft.network.protocol.game.ClientboundDamageEventPacket
 import net.minecraft.network.protocol.game.ClientboundHurtAnimationPacket
+//?} else
+//import net.minecraft.network.packet.s2c.play.EntityEventS2CPacket
 import net.minecraft.network.protocol.game.ClientboundSectionBlocksUpdatePacket
 import net.minecraft.world.entity.Entity
 import org.polyfrost.evergreenhud.client.config.GlobalConfig
@@ -92,8 +95,12 @@ object EvergreenHudClient : ClientModInitializer {
     private fun BlockChangeEvent() {
         eventHandler { event: PacketEvent.Receive ->
             when (val packet = event.getPacket<Any>()) {
+                //~ if = 1.8.9 'ClientboundBlockUpdatePacket' -> 'BlockUpdateS2CPacket'
                 is ClientboundBlockUpdatePacket -> recentBlockChanges.add(packet.pos)
+                //? if > 1.8.9 {
                 is ClientboundSectionBlocksUpdatePacket -> packet.runUpdates { pos, _ -> recentBlockChanges.add(pos) }
+                //?} else
+                //is BlocksUpdateS2CPacket -> packet.updates.forEach { update -> recentBlockChanges.add(update.blockPos) }
 
             }
         }
@@ -110,6 +117,7 @@ object EvergreenHudClient : ClientModInitializer {
         var lastPos = BlockPos.ZERO
         eventHandler { _: TickEvent.End ->
             val player = mc.player ?: return@eventHandler
+            //~ if = 1.8.9 'player.blockPosition()' -> 'BlockPos(player)'
             val pos = player.blockPosition()
             if (pos != lastPos) {
                 lastPos = pos
@@ -140,10 +148,17 @@ object EvergreenHudClient : ClientModInitializer {
         }
 
         eventHandler { (packet): PacketEvent.Receive ->
+            //? if > 1.8.9 {
             when (packet) {
                 is ClientboundDamageEventPacket -> postServerDamage(packet.entityId, packet.sourceCauseId)
                 is ClientboundHurtAnimationPacket -> postServerDamage(packet.id, causeId = -1)
             }
+            //?} else {
+            /*if (packet is EntityEventS2CPacket && packet.event.toInt() == 2) {
+                val target = packet.getEntity(mc.world ?: return@eventHandler) ?: return@eventHandler
+                postServerDamage(target.uniqueEntityId, causeId = -1)
+            }
+            *///?}
         }
     }
 
@@ -154,6 +169,7 @@ object EvergreenHudClient : ClientModInitializer {
     private var lastPostedTime = 0L
 
     private fun postServerDamage(targetId: Int, causeId: Int) {
+        //~ if = 1.8.9 'mc.level' -> 'mc.world'
         val world = mc.level ?: return
         val target = world.getEntity(targetId) ?: return
         val now = System.currentTimeMillis()

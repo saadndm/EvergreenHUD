@@ -2,12 +2,23 @@ package org.polyfrost.evergreenhud.client.hud.potion
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
+//? if > 1.8.9 {
 import net.minecraft.core.registries.BuiltInRegistries
-//? if < 1.21.11
-//import net.minecraft.resources.ResourceLocation
-//? if >= 1.21.11
-import net.minecraft.resources.Identifier as ResourceLocation
 import net.minecraft.world.effect.MobEffectInstance
+//?} else
+//import net.minecraft.entity.living.effect.StatusEffectInstance as MobEffectInstance
+//? if >= 1.21.11 {
+import net.minecraft.resources.Identifier as ResourceLocation
+//?} elif > 1.8.9
+//import net.minecraft.resources.ResourceLocation
+//? if = 1.8.9 {
+/*import net.minecraft.client.resource.language.I18n
+import net.minecraft.entity.living.effect.StatusEffect
+import net.ornithemc.osl.core.api.util.NamespacedIdentifiers
+import net.ornithemc.osl.resource.loader.api.resource.manager.ResourceManager
+import net.ornithemc.osl.resource.loader.api.resource.repository.ResourcePackRepository
+import org.jetbrains.skia.Bitmap
+*///?}
 import org.jetbrains.skia.Image
 import org.jetbrains.skia.Paint
 import org.polyfrost.compose.composables.PolyBox
@@ -70,6 +81,7 @@ class PotionEffectsHud : Hud(
         )
 
         private val iconPaint = Paint()
+        //~ if = 1.8.9 'ResourceLocation' -> 'Int'
         private val iconCache = HashMap<ResourceLocation, Image?>()
         private var cachedPackIds: List<String>? = null
 
@@ -79,6 +91,7 @@ class PotionEffectsHud : Hud(
             iconCache.clear()
         }
 
+        //? if > 1.8.9 {
         fun iconFor(id: ResourceLocation): Image? {
             if (iconCache.containsKey(id)) return iconCache[id]
             val path = ResourceLocation.fromNamespaceAndPath(id.namespace, "textures/mob_effect/${id.path}.png")
@@ -92,6 +105,31 @@ class PotionEffectsHud : Hud(
             iconCache[id] = icon
             return icon
         }
+        //?} else {
+        /*fun iconFor(effect: StatusEffect): Image? {
+            val id = effect.id
+            if (iconCache.containsKey(id)) return iconCache[id]
+            val path = NamespacedIdentifiers.from("minecraft", "textures/gui/container/inventory.png")
+            val icon = try {
+                ResourceManager.client().getResource(path).orElse(null)
+                    ?.open()?.use {
+                        val atlas = ImageLoader.fromBytes(it.readBytes())
+                        val bitmap = Bitmap().apply { allocN32Pixels(ICON.toInt(), ICON.toInt()) }
+                        atlas?.readPixels(
+                            bitmap,
+                            effect.iconIndex % 8 * ICON.toInt(),
+                            198 + effect.iconIndex / 8 * ICON.toInt(),
+                        )
+                        Image.makeFromBitmap(bitmap)
+                    }
+            } catch (e: Exception) {
+                LOGGER.warn("Failed to load the icon for effect {}", id, e)
+                null
+            }
+            iconCache[id] = icon
+            return icon
+        }
+        *///?}
 
         fun roman(value: Int): String {
             if (value < 1 || value > 3999) return value.toString()
@@ -163,6 +201,7 @@ class PotionEffectsHud : Hud(
     override fun canMergeBackground(): Boolean = true
 
     override fun update(): Boolean {
+        //~ if = 1.8.9 'mc.resourcePackRepository' -> 'ResourcePackRepository.client()'
         syncIcons(mc.resourcePackRepository.selectedPacks.map { it.id })
         val next = buildRows()
         if (next == rows.value) return false
@@ -173,12 +212,21 @@ class PotionEffectsHud : Hud(
     private fun buildRows(): List<Row> {
         val effects = currentEffects()
         if (effects.isEmpty()) {
-            return if (!isReal || HudManager.isEditing) EXAMPLES.map { row(ResourceLocation.withDefaultNamespace(it.id), it.name, it.ticks, it.amplifier, false) }
+            return if (!isReal || HudManager.isEditing) EXAMPLES.map {
+                //~ if = 1.8.9 'ResourceLocation.withDefaultNamespace(' -> 'StatusEffect.get('
+                row(ResourceLocation.withDefaultNamespace(it.id), it.name, it.ticks, it.amplifier, false)
+            }
             else emptyList()
         }
 
         val sorted = when (sorting) {
-            NAME -> effects.sortedBy { it.effect.value().displayName.string }
+            NAME -> effects.sortedBy {
+                //? if > 1.8.9 {
+                it.effect.value().displayName.string
+                //?} else
+                //I18n.translate(it.name)
+            }
+            //~ if = 1.8.9 'it.isInfiniteDuration' -> 'it.isPermanent'
             DURATION -> effects.sortedBy { if (it.isInfiniteDuration) Int.MAX_VALUE else it.duration }
             AMPLIFIER -> effects.sortedByDescending { it.amplifier }
             else -> effects
@@ -190,10 +238,14 @@ class PotionEffectsHud : Hud(
     private fun currentEffects(): List<MobEffectInstance> {
         if (!isReal) return emptyList()
         val player = mc.player ?: return emptyList()
+        //? if > 1.8.9 {
         return player.activeEffects.filter { it.showIcon() && (showAmbient || !it.isAmbient) }
+        //?} else
+        //return player.statusEffects.filter { StatusEffect.BY_ID[it.id].hasIcon() && (showAmbient || !it.isAmbient) }
     }
 
     private fun row(effect: MobEffectInstance): Row {
+        //? if > 1.8.9 {
         val mobEffect = effect.effect.value()
         return row(
             BuiltInRegistries.MOB_EFFECT.getKey(mobEffect),
@@ -202,8 +254,19 @@ class PotionEffectsHud : Hud(
             effect.amplifier,
             effect.isInfiniteDuration,
         )
+        //?} else {
+        /*val statusEffect = StatusEffect.BY_ID[effect.id]
+        return row(
+            statusEffect,
+            I18n.translate(statusEffect.translationKey),
+            effect.duration,
+            effect.amplifier,
+            effect.isPermanent,
+        )
+        *///?}
     }
 
+    //~ if = 1.8.9 'ResourceLocation?' -> 'StatusEffect?'
     private fun row(id: ResourceLocation?, name: String, ticks: Int, amplifier: Int, infinite: Boolean): Row {
         val level = amplifier + 1
         val title = when {

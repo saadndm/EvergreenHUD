@@ -27,6 +27,7 @@ class ServerAddressHud : CachedTextHud(
             applyServer(ip)
         }
 
+        //~ if = 1.8.9 'mc.currentServer' -> 'mc.currentServerEntry'
         applyServer(mc.currentServer?.ip)
 
         if (isReal) {
@@ -36,6 +37,7 @@ class ServerAddressHud : CachedTextHud(
     }
 
     private fun applyServer(ip: String?) {
+        //~ if = 1.8.9 'mc.hasSingleplayerServer()' -> 'mc.isIntegratedServerRunning()'
         autoHidden = !showInSinglePlayer && mc.hasSingleplayerServer()
         updateWithText(ip)
     }

@@ -1,9 +1,14 @@
 package org.polyfrost.evergreenhud.client.hud
 
-//? if < 26
-//import net.minecraft.client.gui.GuiGraphics
-//? if >= 26
+//? if >= 26.1 {
 import net.minecraft.client.gui.GuiGraphicsExtractor as GuiGraphics
+//?} elif > 1.8.9 {
+/*import net.minecraft.client.gui.GuiGraphics
+*///?} else {
+/*import net.minecraft.client.gui.GuiElement
+import net.minecraft.client.render.platform.Lighting
+*///?}
+//? if > 1.8.9
 import net.minecraft.world.entity.EquipmentSlot
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
@@ -41,6 +46,7 @@ class ArmorHud : LegacyHud(
         private val exampleLeggings by lazy { ItemStack(Items.DIAMOND_LEGGINGS) }
         private val exampleBoots by lazy { ItemStack(Items.DIAMOND_BOOTS) }
         private val exampleMainHand by lazy { ItemStack(Items.DIAMOND_SWORD) }
+        //? if > 1.8.9
         private val exampleOffhand by lazy { ItemStack(Items.SHIELD) }
     }
 
@@ -59,8 +65,10 @@ class ArmorHud : LegacyHud(
     @Switch(title = "Main Hand")
     var showMainHand = true
 
+    //? if > 1.8.9 {
     @Switch(title = "Off Hand")
     var showOffhand = true
+    //?}
 
     @Slider(title = "Padding", min = 0F, max = 20F, step = 1F)
     var padding = 5f
@@ -146,6 +154,7 @@ class ArmorHud : LegacyHud(
         if (showLeggings) list.add(exampleLeggings)
         if (showBoots) list.add(exampleBoots)
         if (showMainHand) list.add(exampleMainHand)
+        //? if > 1.8.9
         if (showOffhand) list.add(exampleOffhand)
         return list
     }
@@ -153,6 +162,7 @@ class ArmorHud : LegacyHud(
     private fun equippedItems(): ArrayList<ItemStack> {
         val list = ArrayList<ItemStack>(6)
         val player = mc.player ?: return list
+        //? if > 1.8.9 {
         fun add(slot: EquipmentSlot) = player.getItemBySlot(slot).let { if (!it.isEmpty) list.add(it) }
         if (showHelmet) add(EquipmentSlot.HEAD)
         if (showChestplate) add(EquipmentSlot.CHEST)
@@ -160,17 +170,32 @@ class ArmorHud : LegacyHud(
         if (showBoots) add(EquipmentSlot.FEET)
         if (showMainHand) add(EquipmentSlot.MAINHAND)
         if (showOffhand) add(EquipmentSlot.OFFHAND)
+        //?} else {
+        /*fun add(stack: ItemStack?) = stack?.let { list.add(it) }
+        if (showHelmet) add(player.getArmor(3))
+        if (showChestplate) add(player.getArmor(2))
+        if (showLeggings) add(player.getArmor(1))
+        if (showBoots) add(player.getArmor(0))
+        if (showMainHand) add(player.itemInHand)
+        *///?}
         return list
     }
 
     private fun infoText(stack: ItemStack): String = when (extraInfo) {
+        //? if > 1.8.9 {
         DURABILITY -> if (stack.isDamageableItem) (stack.maxDamage - stack.damageValue).toString() else ""
         DURABILITY_PERCENT -> if (stack.isDamageableItem) "${durabilityPercent(stack)}%" else ""
         NAME -> stack.hoverName.string
+        //?} else {
+        /*DURABILITY -> if (stack.isDamageable) (stack.maxDamage - stack.damage).toString() else ""
+        DURABILITY_PERCENT -> if (stack.isDamageable) "${durabilityPercent(stack)}%" else ""
+        NAME -> stack.hoverName
+        *///?}
         else -> ""
     }
 
     private fun durabilityPercent(stack: ItemStack): Int =
+        //~ if = 1.8.9 'stack.damageValue' -> 'stack.damage'
         ceil((stack.maxDamage - stack.damageValue).toFloat() / stack.maxDamage.toFloat() * 100f).toInt()
 
     private fun arrowCount(): Int {
@@ -178,9 +203,13 @@ class ArmorHud : LegacyHud(
         val player = mc.player ?: return 0
         val inv = player.inventory
         var count = 0
+        //~ if = 1.8.9 'inv.containerSize' -> 'inv.size'
         for (i in 0 until inv.containerSize) {
             val s = inv.getItem(i)
+            //? if > 1.8.9 {
             if (s.item == Items.ARROW || s.item == Items.SPECTRAL_ARROW || s.item == Items.TIPPED_ARROW) count += s.count
+            //?} else
+            //if (s != null && s.item == Items.ARROW) count += s.size
         }
         return count
     }
@@ -206,7 +235,9 @@ class ArmorHud : LegacyHud(
             return
         }
 
+        //~ if = 1.8.9 'mc.font' -> 'mc.textRenderer'
         val font = mc.font
+        //~ if = 1.8.9 'font.lineHeight' -> 'font.fontHeight'
         val textY = ((ICON - font.lineHeight) / 2f).roundToInt()
         val pad = padding.toInt()
         val entries = ArrayList<Entry>(stacks.size)
@@ -217,10 +248,12 @@ class ArmorHud : LegacyHud(
 
         for (stack in stacks) {
             val text = infoText(stack)
+            //~ if = 1.8.9 'font.width(' -> 'font.getWidth('
             val textW = if (text.isEmpty()) 0 else font.width(text)
             val textPart = if (textW > 0) TEXT_GAP + textW else 0
             val cellW = ICON + textPart
 
+            //~ if = 1.8.9 'stack.isDamageableItem' -> 'stack.isDamageable'
             val color = if (dynamicColor && stack.isDamageableItem &&
                 (extraInfo == DURABILITY || extraInfo == DURABILITY_PERCENT)
             ) {
@@ -269,40 +302,63 @@ class ArmorHud : LegacyHud(
         }
     }
 
+    //? if > 1.8.9 {
     override fun render(graphics: GuiGraphics) {
+    //?} else
+    //override fun render() {
         val entries = layout
         if (entries.isEmpty()) return
 
         backgroundArgb?.let {
+            //~ if = 1.8.9 'graphics' -> 'GuiElement'
             graphics.fill(0, 0, actualW.toInt(), actualH.toInt(), it)
         }
 
+        //~ if = 1.8.9 'mc.font' -> 'mc.textRenderer'
         val font = mc.font
+        //? if = 1.8.9 {
+        /*// 1.8.9's item renderer expects callers to configure and restore GUI lighting.
+        Lighting.turnOnGui()
+        *///?}
         for (e in entries) {
-            //? if < 26 {
+            //? if >= 26.1 {
+            graphics.item(e.stack, e.iconX, e.iconY)
+            if (showDecorations) graphics.itemDecorations(font, e.stack, e.iconX, e.iconY)
+            //?} elif > 1.8.9 {
             /*graphics.renderItem(e.stack, e.iconX, e.iconY)
             if (showDecorations) graphics.renderItemDecorations(font, e.stack, e.iconX, e.iconY)
             *///?} else {
-            graphics.item(e.stack, e.iconX, e.iconY)
-            if (showDecorations) graphics.itemDecorations(font, e.stack, e.iconX, e.iconY)
-            //?}
+            /*mc.itemRenderer.renderGuiItem(e.stack, e.iconX, e.iconY)
+            if (showDecorations) mc.itemRenderer.renderGuiItemDecoration(font, e.stack, e.iconX, e.iconY)
+            *///?}
 
+            //? if > 1.8.9 {
             if (showArrowCount && (e.stack.item == Items.BOW || e.stack.item == Items.CROSSBOW)) {
+            //?} else
+            //if (showArrowCount && e.stack.item == Items.BOW) {
                 val count = arrowCount().toString()
+                //~ if = 1.8.9 'font.width(' -> 'font.getWidth('
                 val cx = e.iconX + ICON - font.width(count) + 1
+                //~ if = 1.8.9 'font.lineHeight' -> 'font.fontHeight'
                 val cy = e.iconY + ICON - font.lineHeight + 2
-                //? if < 26
-                //graphics.drawString(font, count, cx, cy, 0xFFFFFFFF.toInt())
-                //? if >= 26
+                //? if >= 26.1 {
                 graphics.text(font, count, cx, cy, 0xFFFFFFFF.toInt())
+                //?} elif > 1.8.9 {
+                /*graphics.drawString(font, count, cx, cy, 0xFFFFFFFF.toInt())
+                *///?} else
+                //font.drawWithShadow(count, cx.toFloat(), cy.toFloat(), 0xFFFFFFFF.toInt())
             }
 
             if (e.text.isNotEmpty()) {
-                //? if < 26
-                //graphics.drawString(font, e.text, e.textX, e.textY, e.textColor)
-                //? if >= 26
+                //? if >= 26.1 {
                 graphics.text(font, e.text, e.textX, e.textY, e.textColor)
+                //?} elif > 1.8.9 {
+                /*graphics.drawString(font, e.text, e.textX, e.textY, e.textColor)
+                *///?} else
+                //font.drawWithShadow(e.text, e.textX.toFloat(), e.textY.toFloat(), e.textColor)
             }
         }
+        //? if = 1.8.9
+        //Lighting.turnOff()
     }
 }

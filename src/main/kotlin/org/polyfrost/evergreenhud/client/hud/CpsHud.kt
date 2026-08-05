@@ -61,7 +61,9 @@ class CpsHud : CachedTextHud(
                 if (state == 1) {
                     val options = mc.options ?: return@eventHandler
                     var counted = false
+                    //~ if = 1.8.9 'options.keyAttack' -> 'options.attackKey'
                     if (options.keyAttack.matchesMouseButton(btn)) { onLeftClick(); counted = true }
+                    //~ if = 1.8.9 'options.keyUse' -> 'options.useKey'
                     if (options.keyUse.matchesMouseButton(btn)) { onRightClick(); counted = true }
                     if (counted) updateAndRecalculate()
                 }
@@ -70,7 +72,9 @@ class CpsHud : CachedTextHud(
                 if (state == 1 && key != 0) {
                     val options = mc.options ?: return@eventHandler
                     var counted = false
+                    //~ if = 1.8.9 'options.keyAttack' -> 'options.attackKey'
                     if (options.keyAttack.matchesKeyCode(key)) { onLeftClick(); counted = true }
+                    //~ if = 1.8.9 'options.keyUse' -> 'options.useKey'
                     if (options.keyUse.matchesKeyCode(key)) { onRightClick(); counted = true }
                     if (counted) updateAndRecalculate()
                 }

@@ -177,7 +177,9 @@ class MouseStrokesHud : Hud(
         lastFrameMs = nowMs
 
         val player = mc.player
+        //~ if = 1.8.9 'player?.yRot' -> 'player?.yaw'
         val yaw = player?.yRot ?: 0f
+        //~ if = 1.8.9 'player?.xRot' -> 'player?.pitch'
         val pitch = player?.xRot ?: 0f
         if (player == null || lastYaw.isNaN()) {
             lastYaw = yaw

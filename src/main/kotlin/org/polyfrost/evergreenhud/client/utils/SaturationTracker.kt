@@ -3,24 +3,27 @@
 
 package org.polyfrost.evergreenhud.client.utils
 
+//? if > 1.8.9 {
 import net.minecraft.network.protocol.game.ClientboundDamageEventPacket
 import net.minecraft.tags.FluidTags
+import net.minecraft.world.entity.player.Player
+import net.minecraft.world.phys.Vec3
+import org.polyfrost.oneconfig.api.event.v1.events.PacketEvent
+import kotlin.math.roundToInt
+import kotlin.math.sqrt
+//?} else
+//import net.minecraft.world.entity.player.Player as Player
 import net.minecraft.world.Difficulty
 import net.minecraft.world.entity.LivingEntity
-import net.minecraft.world.entity.player.Player
 import net.minecraft.world.food.FoodData
-import net.minecraft.world.phys.Vec3
 import org.polyfrost.evergreenhud.client.SaturationChangedEvent
 import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.event.v1.eventHandler
-import org.polyfrost.oneconfig.api.event.v1.events.PacketEvent
 import org.polyfrost.oneconfig.api.event.v1.events.TickEvent
 import org.polyfrost.oneconfig.utils.v1.dsl.mc
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.math.roundToInt
-import kotlin.math.sqrt
 
 object SaturationTracker {
     private const val EXHAUSTION_PER_SATURATION = 4.0f
@@ -29,6 +32,7 @@ object SaturationTracker {
     private const val FAST_REGEN_INTERVAL = 10
     private const val SLOW_REGEN_INTERVAL = 80
     private const val FAST_REGEN_MAX_EXHAUSTION = 6.0f
+    //~ if = 1.8.9 '6.0f' -> '3.0f'
     private const val SLOW_REGEN_EXHAUSTION = 6.0f
 
     private const val SPRINT_EXHAUSTION_PER_CM = 0.1f
@@ -48,6 +52,7 @@ object SaturationTracker {
 
     private var foodLevel = 20
     private var tickTimer = 0
+    //? if > 1.8.9
     private var lastPosition: Vec3? = null
     private var lastPosted = Float.NaN
 
@@ -56,6 +61,7 @@ object SaturationTracker {
     fun initialize() {
         eventHandler { _: TickEvent.End -> tick() }
 
+        //? if > 1.8.9 {
         eventHandler { (packet): PacketEvent.Receive ->
             if (packet !is ClientboundDamageEventPacket) return@eventHandler
             val player = mc.player ?: return@eventHandler
@@ -63,9 +69,12 @@ object SaturationTracker {
             if (packet.entityId() != player.id) return@eventHandler
             pendingExhaustion.add(packet.getSource(level).foodExhaustion)
         }
+        //?}
     }
 
+    //~ if = 1.8.9 'FoodData' -> 'HungerManager'
     fun onServerSync(data: FoodData) {
+        //~ if = 1.8.9 'foodData' -> 'hungerManager'
         if (mc.player?.foodData !== data) return
         foodLevel = data.foodLevel
         saturation = data.saturationLevel
@@ -78,7 +87,7 @@ object SaturationTracker {
     }
 
     fun onJump(entity: LivingEntity) {
-        //? if 1.21.1
+        //? if 1.21.1 || 1.8.9
         //if (true) return
         val player = mc.player ?: return
         if (entity !== player) return
@@ -86,7 +95,9 @@ object SaturationTracker {
     }
 
     fun onDestroyBlock() {
+        //~ if = 1.8.9 'mc.gameMode' -> 'mc.interactionManager'
         val gameMode = mc.gameMode ?: return
+        //~ if = 1.8.9 'gameMode.playerMode' -> 'gameMode.gameMode'
         if (gameMode.playerMode.isCreative) return
         addExhaustion(MINE_EXHAUSTION)
     }
@@ -107,6 +118,7 @@ object SaturationTracker {
             addExhaustion(pendingExhaustion.poll() ?: break)
         }
 
+        //? if > 1.8.9
         trackMovement(player)
         simulateFoodTick(player)
         post()
@@ -118,10 +130,12 @@ object SaturationTracker {
         exhaustion = 0.0f
         foodLevel = 20
         tickTimer = 0
+        //? if > 1.8.9
         lastPosition = null
         lastPosted = Float.NaN
     }
 
+    //? if > 1.8.9 {
     private fun trackMovement(player: Player) {
         val position = player.position()
         val previous = lastPosition
@@ -155,18 +169,23 @@ object SaturationTracker {
 
     private fun centimetres(dx: Double, dy: Double, dz: Double): Int =
         (sqrt(dx * dx + dy * dy + dz * dz).toFloat() * 100.0f).roundToInt()
+    //?}
 
     private fun simulateFoodTick(player: Player) {
         if (exhaustion > EXHAUSTION_PER_SATURATION) {
             exhaustion -= EXHAUSTION_PER_SATURATION
             if (saturation > 0.0f) {
                 saturation = max(saturation - 1.0f, 0.0f)
+            //~ if = 1.8.9 'player.level()' -> 'player.world'
             } else if (player.level().difficulty != Difficulty.PEACEFUL) {
                 foodLevel = max(foodLevel - 1, 0)
             }
         }
 
+        //~ if = 1.8.9 'player.isHurt' -> 'player.needsHealing()'
         val hurt = player.isHurt
+
+        //? if > 1.8.9 {
         if (saturation > 0.0f && hurt && foodLevel >= 20) {
             tickTimer++
             if (tickTimer >= FAST_REGEN_INTERVAL) {
@@ -174,6 +193,8 @@ object SaturationTracker {
                 tickTimer = 0
             }
         } else if (hurt && foodLevel >= 18) {
+        //?} else
+        //if (hurt && foodLevel >= 18) {
             tickTimer++
             if (tickTimer >= SLOW_REGEN_INTERVAL) {
                 addExhaustion(SLOW_REGEN_EXHAUSTION)

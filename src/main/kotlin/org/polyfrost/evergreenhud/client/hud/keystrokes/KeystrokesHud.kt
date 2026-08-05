@@ -3,7 +3,12 @@ package org.polyfrost.evergreenhud.client.hud.keystrokes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+//? if > 1.8.9 {
 import net.minecraft.client.KeyMapping
+//?} else {
+/*import net.minecraft.client.options.GameOptions
+import net.minecraft.client.options.KeyBinding as KeyMapping
+*///?}
 import org.polyfrost.compose.composables.PolyBox
 import org.polyfrost.compose.composables.PolyCanvas
 import org.polyfrost.compose.composables.PolyColumn
@@ -198,7 +203,9 @@ class KeystrokesHud : Hud(
         if (!showClicks || cpsMode == CPS_NONE) return
         val o = mc.options ?: return
         val now = System.nanoTime()
+        //~ if = 1.8.9 'o.keyAttack' -> 'o.attackKey'
         if (matches(o.keyAttack)) keys.attackClicks.add(now)
+        //~ if = 1.8.9 'o.keyUse' -> 'o.useKey'
         if (matches(o.keyUse)) keys.useClicks.add(now)
     }
 
@@ -211,6 +218,7 @@ class KeystrokesHud : Hud(
         val inStep = if (fadeInMs <= 0f) 1f else dtMs / fadeInMs
         val outStep = if (fadeOutMs <= 0f) 1f else dtMs / fadeOutMs
         fun poll(state: MutableState<Float>, key: KeyMapping) {
+            //~ if = 1.8.9 'key.isDown' -> 'key.isPressed'
             val target = if (key.isDown) 1f else 0f
             val cur = state.value
             val next = when {
@@ -223,14 +231,23 @@ class KeystrokesHud : Hud(
                 changed = true
             }
         }
+        //~ if = 1.8.9 'o.keyUp' -> 'o.forwardKey'
         poll(keys.forward, o.keyUp)
+        //~ if = 1.8.9 'o.keyLeft' -> 'o.leftKey'
         poll(keys.left, o.keyLeft)
+        //~ if = 1.8.9 'o.keyDown' -> 'o.backKey'
         poll(keys.back, o.keyDown)
+        //~ if = 1.8.9 'o.keyRight' -> 'o.rightKey'
         poll(keys.right, o.keyRight)
+        //~ if = 1.8.9 'o.keyJump' -> 'o.jumpKey'
         poll(keys.jump, o.keyJump)
+        //~ if = 1.8.9 'o.keyAttack' -> 'o.attackKey'
         poll(keys.attack, o.keyAttack)
+        //~ if = 1.8.9 'o.keyUse' -> 'o.useKey'
         poll(keys.use, o.keyUse)
+        //~ if = 1.8.9 'o.keySprint' -> 'o.sprintKey'
         poll(keys.sprint, o.keySprint)
+        //~ if = 1.8.9 'o.keyShift' -> 'o.sneakKey'
         poll(keys.sneak, o.keyShift)
         if (showClicks && cpsMode != CPS_NONE) {
             fun pollCps(clicks: ArrayList<Long>, cps: MutableState<Int>) {
@@ -263,11 +280,15 @@ class KeystrokesHud : Hud(
             for (row in rows) when (row) {
                 ROW_MOVEMENT -> {
                     PolyBox(modifier = PolyModifier.size(rowW, keyH)) {
+                        //~ if = 1.8.9 'o.keyUp' -> 'o.forwardKey'
                         Key(if (useArrows) UP else o.keyUp.label(), keys.forward.value, keyW, keyH, PolyAlign.Center)
                     }
                     PolyRow(gap = gap) {
+                        //~ if = 1.8.9 'o.keyLeft' -> 'o.leftKey'
                         Key(if (useArrows) LEFT else o.keyLeft.label(), keys.left.value, keyW, keyH)
+                        //~ if = 1.8.9 'o.keyDown' -> 'o.backKey'
                         Key(if (useArrows) DOWN else o.keyDown.label(), keys.back.value, keyW, keyH)
+                        //~ if = 1.8.9 'o.keyRight' -> 'o.rightKey'
                         Key(if (useArrows) RIGHT else o.keyRight.label(), keys.right.value, keyW, keyH)
                     }
                 }
@@ -279,8 +300,10 @@ class KeystrokesHud : Hud(
                     ClickKey("RMB", keys.use.value, keys.useCps.value, clickW, keyH)
                 }
 
+                //~ if = 1.8.9 'o.keySprint' -> 'o.sprintKey'
                 ROW_SPRINT -> Key(o.keySprint.label(), keys.sprint.value, rowW, keyH)
 
+                //~ if = 1.8.9 'o.keyShift' -> 'o.sneakKey'
                 ROW_SNEAK -> Key(o.keyShift.label(), keys.sneak.value, rowW, keyH)
             }
         }
@@ -377,6 +400,7 @@ class KeystrokesHud : Hud(
         }
     }
 
+    //~ if = 1.8.9 'translatedKeyMessage.string' -> 'GameOptions.getKeyName(keyCode)'
     private fun KeyMapping.label(): String = translatedKeyMessage.string
 }
 

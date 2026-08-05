@@ -63,8 +63,11 @@ class SpeedHud : GenericNumberHud(
             return format(value)
         }
 
+        //~ if = 1.8.9 'player.xo' -> 'player.prevX'
         val dx = if (useX) (player.x - player.xo).toFloat() else 0f
+        //~ if = 1.8.9 'player.yo' -> 'player.prevY'
         val dy = if (useY) (player.y - player.yo).toFloat() else 0f
+        //~ if = 1.8.9 'player.zo' -> 'player.prevZ'
         val dz = if (useZ) (player.z - player.zo).toFloat() else 0f
         value = convertSpeed(sqrt(dx * dx + dy * dy + dz * dz))
 
